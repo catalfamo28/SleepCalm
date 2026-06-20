@@ -1,0 +1,10 @@
+{
+  "name": "ebay-refresher-env",
+  "config": {
+    "type": "cloud",
+    "networking": {"type": "unrestricted"},
+    "packages": {
+      "pip": ["requests", "python-dateutil"]
+    }
+  }
+}

@@ -1,0 +1,237 @@
+<!doctype html>
+<!-- Copyright 2026 Anthropic PBC — Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ebay-stale-listing-refresher — agent schema</title>
+<style>
+  :root {
+    --bg:#faf9f5; --panel:#ffffff; --inset:#f0eee6; --ink:#141413; --body:#3d3d3a; --sub:#73726c; --mut:#9c9a92;
+    --hairline:rgba(20,20,19,.12); --hairline-soft:rgba(20,20,19,.07);
+    --live:#22865c; --live-bright:#1d7a52; --clay:#ad5724; --amber:#9a7d24; --ghost:#b0aea5;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         background:var(--bg); color:var(--body); font-size:14px; line-height:1.5;
+         background-image:linear-gradient(rgba(20,20,19,.045) 1px,transparent 1px),
+                          linear-gradient(90deg,rgba(20,20,19,.045) 1px,transparent 1px);
+         background-size:46px 46px; }
+  .wrap { max-width:1200px; margin:0 auto; padding:0 22px 60px; }
+
+  .topbar { position:sticky; top:0; z-index:30; display:flex; align-items:center; justify-content:space-between; gap:18px;
+            background:rgba(250,249,245,.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--hairline);
+            padding:12px 22px; margin:0 -22px; }
+  .ident { display:flex; align-items:center; gap:12px; }
+  .sigil { width:36px; height:36px; flex:none; display:flex; align-items:center; justify-content:center; border-radius:9px;
+           background:rgba(34,134,92,.10); border:1px solid rgba(34,134,92,.35); font-size:18px; }
+  h1 { margin:0; font-size:19px; font-weight:600; color:var(--ink); }
+  .statepill { display:inline-flex; align-items:center; gap:7px; padding:3px 11px; border-radius:999px;
+               font-family:var(--mono); font-size:11px; letter-spacing:.08em; }
+  .statepill.planned { background:var(--inset); border:1px solid var(--hairline); color:var(--sub); }
+  .led { width:7px; height:7px; border-radius:50%; }
+  .led.planned { background:transparent; border:1.5px solid var(--ghost); }
+  .byline { font-family:var(--mono); font-size:11.5px; color:var(--mut); margin-top:3px; }
+  .problem { margin:18px 2px 0; color:var(--sub); font-size:13.5px; max-width:90ch; }
+
+  /* pipeline */
+  .pipeline { display:flex; align-items:flex-start; gap:0; margin-top:32px; overflow-x:auto; padding-bottom:8px; }
+  .pipe-node { flex:none; width:260px; }
+  .pipe-arrow { flex:none; display:flex; align-items:center; padding:0 6px; margin-top:48px; color:var(--mut); font-size:20px; }
+  .node-card { background:var(--panel); border:1px solid var(--hairline); border-radius:14px; padding:18px 18px 14px; }
+  .node-label { font-family:var(--mono); font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--mut); margin-bottom:8px; }
+  .node-title { font-size:15px; font-weight:600; color:var(--ink); margin-bottom:4px; }
+  .node-sub { font-size:12.5px; color:var(--sub); margin-bottom:12px; }
+  .tag { display:inline-flex; align-items:center; gap:4px; background:var(--inset); border:1px solid var(--hairline);
+         border-radius:6px; padding:2px 8px; font-family:var(--mono); font-size:11px; color:var(--body); margin:2px 2px 0 0; }
+  .tag.ghost { color:var(--mut); border-style:dashed; }
+  .field-key { font-family:var(--mono); font-size:10px; color:var(--mut); letter-spacing:.06em; margin-top:10px; display:block; }
+  .field-val { font-family:var(--mono); font-size:11.5px; color:var(--body); }
+
+  /* rubric */
+  .section { margin-top:36px; }
+  .section-title { font-family:var(--mono); font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:var(--mut); margin-bottom:14px; }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--mut);
+       padding:6px 10px; border-bottom:1px solid var(--hairline); }
+  td { padding:8px 10px; border-bottom:1px solid var(--hairline-soft); font-size:13px; vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  .verdict { font-family:var(--mono); font-size:11px; padding:2px 8px; border-radius:6px; }
+  .verdict.pending { background:var(--inset); color:var(--mut); }
+
+  /* next-directions rail */
+  .rail { display:flex; gap:16px; margin-top:12px; overflow-x:auto; padding-bottom:6px; }
+  .rail-card { flex:none; width:240px; background:var(--panel); border:1px dashed var(--hairline); border-radius:10px; padding:14px; }
+  .rail-ver { font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--mut); margin-bottom:6px; }
+  .rail-title { font-size:13px; font-weight:600; color:var(--ink); margin-bottom:4px; }
+  .rail-why { font-size:12px; color:var(--sub); }
+
+  .rule-box { background:rgba(173,87,36,.06); border:1px solid rgba(173,87,36,.25); border-radius:10px; padding:14px 16px; margin-top:12px; }
+  .rule-box li { font-size:12.5px; color:var(--clay); margin-bottom:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- top bar -->
+  <div class="topbar">
+    <div class="ident">
+      <div class="sigil">🤖</div>
+      <div>
+        <h1>ebay-stale-listing-refresher</h1>
+        <div class="byline">model: PICKED-AT-LAUNCH &nbsp;·&nbsp; agent: — &nbsp;·&nbsp; env: —</div>
+      </div>
+    </div>
+    <div class="statepill planned"><span class="led planned"></span>○ Planned</div>
+  </div>
+
+  <p class="problem">
+    "My eBay store has stale listings sitting for 90+ days with no sales. Find them, end them, rewrite for SEO, and relist at ≤5/day so each gets fresh visibility. CorningWare power cords are excluded — never touch them."
+  </p>
+
+  <!-- pipeline -->
+  <div class="pipeline">
+
+    <!-- trigger -->
+    <div class="pipe-node">
+      <div class="node-card">
+        <div class="node-label">Trigger</div>
+        <div class="node-title">🗓️ Deployment</div>
+        <div class="node-sub">Scheduled</div>
+        <span class="field-key">schedule.expression</span>
+        <div class="field-val">0 6 * * 1</div>
+        <span class="field-key">schedule.timezone</span>
+        <div class="field-val">America/New_York</div>
+        <span class="field-key">human</span>
+        <div class="field-val">Every Monday 6 AM Eastern</div>
+        <span class="field-key">deployment id</span>
+        <div class="field-val" style="color:var(--mut)">— (after launch)</div>
+      </div>
+    </div>
+
+    <div class="pipe-arrow">→</div>
+
+    <!-- worker -->
+    <div class="pipe-node" style="width:320px">
+      <div class="node-card">
+        <div class="node-label">Worker</div>
+        <div class="node-title">🤖 Agent <span style="font-weight:400;color:var(--sub)">inside 📦 Env</span></div>
+        <div class="node-sub">ebay-refresher-env · cloud · unrestricted</div>
+
+        <span class="field-key">system (job)</span>
+        <div class="field-val" style="font-size:12px;color:var(--sub)">Find 90+ day stale listings → end → SEO-rewrite → relist ≤5/day</div>
+
+        <span class="field-key">tools[]</span>
+        <div style="margin-top:4px">
+          <span class="tag">agent_toolset_20260401</span>
+        </div>
+
+        <span class="field-key">environment packages (pip)</span>
+        <div style="margin-top:4px">
+          <span class="tag">requests</span>
+          <span class="tag">python-dateutil</span>
+        </div>
+
+        <span class="field-key">vault_ids[] · 🔐</span>
+        <div style="margin-top:4px">
+          <span class="tag">EBAY_APP_ID</span>
+          <span class="tag">EBAY_CERT_ID</span>
+          <span class="tag">EBAY_USER_TOKEN</span>
+        </div>
+
+        <span class="field-key">mcp_servers[] · 🔌</span>
+        <div style="margin-top:4px"><span class="tag ghost">none in v0</span></div>
+
+        <span class="field-key">resources[] · 🧠</span>
+        <div style="margin-top:4px"><span class="tag ghost">no memory store in v0</span></div>
+
+        <div class="rule-box" style="margin-top:14px">
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--clay);margin-bottom:6px">system (never-dos)</div>
+          <ul style="margin:0;padding-left:16px">
+            <li>Never touch "power cord" titles</li>
+            <li>Never list live same-day — ScheduleTime required</li>
+            <li>Never exceed 5 new listings/day</li>
+            <li>Never invent product details</li>
+            <li>Never exceed 80 chars in a title</li>
+            <li>Never change price, category, or item specifics</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="pipe-arrow">→</div>
+
+    <!-- output & grading -->
+    <div class="pipe-node" style="width:280px">
+      <div class="node-card">
+        <div class="node-label">Output &amp; Grading</div>
+        <div class="node-title">📤 Deliverable</div>
+        <div class="node-sub">relisting_report.md → /mnt/session/outputs/</div>
+
+        <div style="margin-top:10px;font-size:12.5px;color:var(--sub)">
+          Summary counts · old→new title table · scheduled go-live dates · skipped items
+        </div>
+
+        <span class="field-key">user.define_outcome → rubric</span>
+        <div style="margin-top:6px;font-size:12px;color:var(--sub)">6 binary criteria — see rubric table below</div>
+
+        <span class="field-key">max_iterations</span>
+        <div class="field-val">3</div>
+
+        <span class="field-key">🧪 evals</span>
+        <div style="margin-top:4px"><span class="tag">case-01 (first run)</span><span class="tag ghost">case-02 (held back)</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- rubric -->
+  <div class="section">
+    <div class="section-title">🎯 Outcome rubric · user.define_outcome → rubric.content</div>
+    <table>
+      <tr><th>#</th><th>Criterion</th><th>Verdict</th></tr>
+      <tr><td>1</td><td>All 90+ day stale listings identified; "power cord" titles excluded and absent from report</td><td><span class="verdict pending">pending</span></td></tr>
+      <tr><td>2</td><td>Every processed listing has a confirmed EndItem success before its replacement is created</td><td><span class="verdict pending">pending</span></td></tr>
+      <tr><td>3</td><td>New listings carry over all original images, item specifics, category, condition, and price unchanged</td><td><span class="verdict pending">pending</span></td></tr>
+      <tr><td>4</td><td>Every new title is ≤80 chars, keyword-first, no filler words or ALL CAPS blocks</td><td><span class="verdict pending">pending</span></td></tr>
+      <tr><td>5</td><td>All new listings use ScheduleTime; none go live same-day; ≤5 scheduled per calendar day</td><td><span class="verdict pending">pending</span></td></tr>
+      <tr><td>6</td><td>relisting_report.md written to outputs with summary, old→new title table, and skipped items</td><td><span class="verdict pending">pending</span></td></tr>
+    </table>
+  </div>
+
+  <!-- next-directions rail -->
+  <div class="section">
+    <div class="section-title">Roadmap · NEXT-DIRECTIONS.md</div>
+    <div class="rail">
+      <div class="rail-card">
+        <div class="rail-ver">v1</div>
+        <div class="rail-title">📊 Preview report</div>
+        <div class="rail-why">Email + Google Sheet tab before anything is ended. Needs Gmail + Sheets API credentials.</div>
+      </div>
+      <div class="rail-card">
+        <div class="rail-ver">v2</div>
+        <div class="rail-title">💰 Price comps</div>
+        <div class="rail-why">eBay sold comps (low/avg/high) added as Sheet columns. Flags items priced >20% off avg.</div>
+      </div>
+      <div class="rail-card">
+        <div class="rail-ver">v3</div>
+        <div class="rail-title">🧪 Eval regression</div>
+        <div class="rail-why">Run evals/run-evals.sh before promoting any new agent version to the deployment.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- run log -->
+  <div class="section">
+    <div class="section-title">▶️ Run log</div>
+    <table>
+      <tr><th>Run</th><th>Session ID</th><th>Rubric version</th><th>Verdict</th><th>Note</th></tr>
+      <tr><td colspan="5" style="color:var(--mut);font-family:var(--mono);font-size:12px">No runs yet — launch first</td></tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

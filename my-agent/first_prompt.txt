@@ -1,0 +1,11 @@
+Run the weekly eBay stale listing refresh for today, as of this run.
+
+Find all active listings in the seller account that have been unsold for 90 or more days as of today. Skip any listing whose title contains "power cord" (case-insensitive).
+
+For each stale listing:
+1. End the old listing
+2. Pull all details (title, description, images, item specifics, category, price, condition)
+3. Rewrite the title (≤80 chars, keyword-first, no filler) and description (structured bullets, accurate to the original)
+4. Create a new scheduled listing with ScheduleTime set so that no more than 5 new listings go live per day, starting tomorrow at 10:00 AM Eastern
+
+Write relisting_report.md to /mnt/session/outputs/ with a full summary of what was processed, the old vs new titles, scheduled go-live dates, and anything skipped with the reason.

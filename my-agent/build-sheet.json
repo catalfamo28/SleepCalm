@@ -1,0 +1,93 @@
+{
+  "meta": {
+    "founder": "catalfamo28@gmail.com",
+    "problem": "My eBay store has stale listings sitting for 90+ days with no sales. I want the agent to find them, end them, rewrite the titles and descriptions for better eBay SEO, and relist them — no more than 5 per day so they get fresh visibility. CorningWare power cord listings are excluded and must never be touched.",
+    "created": "2026-06-20",
+    "skill_version": "0.3.0"
+  },
+  "agent": {
+    "name": "ebay-stale-listing-refresher",
+    "model": "PICKED-AT-LAUNCH",
+    "model_rationale": "Newest Opus-class — quality matters here because the agent is rewriting SEO copy and making write-actions in the seller account.",
+    "version": null,
+    "system_summary": "Scans the eBay seller account for active listings unsold for 90+ days. Skips any listing whose title contains 'power cord' (case-insensitive). For each stale listing: ends the old listing, pulls all details (title, description, images, item specifics, category, price), rewrites the title (≤80 chars, keyword-rich) and description (structured bullets, key specs, condition) for eBay SEO, then creates a new scheduled listing using the same images and specifics — scheduled to go live at a rate of no more than 5 per day, starting the next calendar day.",
+    "never_dos": [
+      "Never touch any listing whose title contains 'power cord' (case-insensitive) — not end it, not modify it, not relist it",
+      "Never go live immediately — all new listings must use ScheduleTime set to a future date at ≤5 listings/day",
+      "Never invent product details, specs, or claims not present in the original listing",
+      "Never exceed 80 characters in a new title",
+      "Never change the price, category, or item specifics — only title and description are rewritten"
+    ]
+  },
+  "outcome": {
+    "description": "End stale eBay listings (90+ days, no 'power cord' in title), rewrite for SEO, and relist scheduled at ≤5/day",
+    "rubric_criteria": [
+      "All active listings 90+ days old are identified (excluding 'power cord' titles)",
+      "Each stale listing is ended via the eBay API before a replacement is created",
+      "New listing carries over all original images, item specifics, category, and price unchanged",
+      "New listing title is ≤80 characters and leads with the most searchable keywords",
+      "New listings are scheduled (ScheduleTime) at ≤5 per day starting tomorrow — none go live same-day",
+      "A relisting_report.md is written to /mnt/session/outputs/ summarising: items processed, new titles, scheduled go-live dates, and any items skipped with reason"
+    ],
+    "max_iterations": 3
+  },
+  "tools": {
+    "toolset": "agent_toolset_20260401",
+    "permission_overrides": [],
+    "custom_tools": []
+  },
+  "connections": {
+    "mcp_servers": [],
+    "vault_credentials": [
+      {"name": "EBAY_APP_ID", "type": "environment_variable", "note": "eBay Production App ID from developer.ebay.com"},
+      {"name": "EBAY_CERT_ID", "type": "environment_variable", "note": "eBay Production Cert ID (Client Secret)"},
+      {"name": "EBAY_USER_TOKEN", "type": "environment_variable", "note": "eBay OAuth User Token for the seller account"}
+    ],
+    "notes": "v0 uses eBay Trading API directly via curl/python in the sandbox. v1 adds Gmail + Google Sheets via vault env vars for the preview report."
+  },
+  "skills": [],
+  "memory": {
+    "stores": []
+  },
+  "environment": {
+    "name": "ebay-refresher-env",
+    "type": "cloud",
+    "networking": "unrestricted",
+    "packages": {"pip": ["requests", "python-dateutil"]}
+  },
+  "schedule": {
+    "mode": "scheduled",
+    "cron": "0 6 * * 1",
+    "timezone": "America/New_York",
+    "human": "Every Monday at 6:00 AM Eastern",
+    "kickoff": "user.define_outcome (task + rubric above)"
+  },
+  "evals": {
+    "cases": [
+      {"name": "first-live-run", "input": "evals/case-01/input.md", "expected": "evals/case-01/expected.md (filled after first passing run)", "last_verdict": null},
+      {"name": "held-back-batch", "input": "evals/case-02/input.md", "expected": "evals/case-02/expected.md", "last_verdict": null}
+    ],
+    "notes": "Case-01 is today's run; case-02 is held back as regression check before promoting any new agent version."
+  },
+  "next_directions": [
+    {
+      "version": "v1",
+      "what": "Weekly preview report — email + Google Sheet tab before anything gets ended",
+      "why_deferred": "Needs Gmail API OAuth and Google Sheets API credentials not on hand for v0",
+      "how": "Add GMAIL_CREDENTIALS and GOOGLE_SHEETS_CREDENTIALS as vault environment_variable credentials; agent writes report to Sheet first, sends email, then waits for approval or a time window before proceeding with ends/relists"
+    },
+    {
+      "version": "v2",
+      "what": "Price comps check — add eBay sold comps (low/avg/high) as columns in the Google Sheet",
+      "why_deferred": "Requires eBay Marketplace Insights API access (separate entitlement) and v1 Sheet already in place",
+      "how": "Use eBay Browse API (GET /buy/marketplace_insights/v1_beta/item_sales/search) to pull recent sold comps per category; add columns: comp_low / comp_avg / comp_high / your_price / flag (>20% off avg)"
+    },
+    {
+      "version": "v3",
+      "what": "Re-run evals before promoting any new agent version to the deployment",
+      "why_deferred": "Process habit — reminder to run evals/run-evals.sh and check verdicts before bumping the deployment's agent version",
+      "how": "Run evals/run-evals.sh against the new agent version; only update the deployment if all verdicts hold"
+    }
+  ],
+  "ids": {}
+}

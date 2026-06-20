@@ -1,5 +1,5 @@
-// Vercel serverless function — receives image, uploads to Anthropic Files API,
-// creates a CMA session, returns session_id for polling.
+// Vercel serverless function — receives image, hosts it publicly via transfer.sh,
+// creates a CMA session with the public URL for the agent to download.
 
 export const config = { api: { bodyParser: false } };
 
@@ -41,23 +41,18 @@ export default async function handler(req, res) {
     // 1. Parse the uploaded image
     const { imageData, mimeType } = await readMultipart(req);
 
-    // 2. Upload image to Anthropic Files API to get a file_id
-    const formData = new FormData();
-    const blob = new Blob([imageData], { type: mimeType });
-    formData.append('file', blob, 'item.jpg');
-
-    const fileRes = await fetch('https://api.anthropic.com/v1/files', {
-      method: 'POST',
+    // 2. Upload to transfer.sh — free public file host, no auth needed
+    const filename = `item-${Date.now()}.jpg`;
+    const uploadRes = await fetch(`https://transfer.sh/${filename}`, {
+      method: 'PUT',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'files-api-2025-04-14',
+        'Content-Type': mimeType,
+        'Max-Days': '1',
       },
-      body: formData,
+      body: imageData,
     });
-    if (!fileRes.ok) throw new Error('Failed to upload image: ' + await fileRes.text());
-    const fileData = await fileRes.json();
-    const fileId = fileData.id;
+    if (!uploadRes.ok) throw new Error('Image host upload failed: ' + await uploadRes.text());
+    const imageUrl = (await uploadRes.text()).trim();
 
     // 3. Create a CMA session
     const BASE = 'https://api.anthropic.com/v1';
@@ -82,27 +77,25 @@ export default async function handler(req, res) {
     const session = await sessionRes.json();
     const sessionId = session.id;
 
-    // 4. Kick off — pass the Anthropic file_id; agent downloads it via Files API
+    // 4. Kick off with the image URL
     const task = `A seller has uploaded a photo of an item they want to list on eBay.
 
-The image has been uploaded to the Anthropic Files API with file_id: ${fileId}
+Download the image from this URL and save it to /tmp/item_photo.jpg:
+${imageUrl}
 
-To retrieve the image, use the bash tool to run:
-curl -s "https://api.anthropic.com/v1/files/${fileId}/content" \\
-  -H "x-api-key: $ANTHROPIC_API_KEY_FOR_FILES" \\
-  -H "anthropic-version: 2023-06-01" \\
-  -H "anthropic-beta: files-api-2025-04-14" \\
-  --output /tmp/item_photo.jpg
+Use your bash tool to run:
+curl -sL "${imageUrl}" -o /tmp/item_photo.jpg
 
-Then analyze the saved image at /tmp/item_photo.jpg using your vision capability to identify the item.
+Then analyze /tmp/item_photo.jpg using your vision capability to identify the item (brand, model, type, condition).
 
 After identifying the item:
-1. Search eBay sold comps using the Finding API
-2. Write an SEO-optimized title (≤80 chars) and HTML description
-3. Create a draft listing in eBay using AddItem with ScheduleTime 30 days from today
-4. Write result.json to /mnt/session/outputs/`;
+1. Search eBay sold comps using the Finding API (findCompletedItems) to get low/avg/high sold prices
+2. Write an SEO-optimized title (≤80 chars, keyword-first, no ALL CAPS)
+3. Write a structured HTML description (bullets: what it is, condition, what's included)
+4. Create a draft in eBay using AddItem with ScheduleTime 30 days from today at 10 AM Eastern
+5. Write result.json to /mnt/session/outputs/ with: item_identified, title, price_recommended, comp_low, comp_avg, comp_high, ebay_item_id, schedule_time`;
 
-    const rubric = `1. Item correctly identified from the photo\n2. eBay sold comps found (low/avg/high)\n3. Title ≤80 chars, keyword-first, no ALL CAPS\n4. HTML description with condition and details\n5. AddItem succeeds — valid eBay Item ID in result.json\n6. ScheduleTime is 30+ days in the future`;
+    const rubric = `1. Image downloaded and item identified\n2. eBay sold comps found (low/avg/high)\n3. Title ≤80 chars, keyword-first, no ALL CAPS\n4. HTML description written\n5. AddItem succeeds — valid eBay Item ID in result.json\n6. ScheduleTime is 30+ days in the future`;
 
     const kickRes = await fetch(`${BASE}/sessions/${sessionId}/events`, {
       method: 'POST',

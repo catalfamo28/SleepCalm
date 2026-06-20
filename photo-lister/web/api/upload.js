@@ -90,7 +90,26 @@ Then analyze /tmp/item_photo.jpg using your vision capability to identify the it
 After identifying the item:
 1. Search eBay sold comps using the Finding API (findCompletedItems) to get low/avg/high sold prices
 2. Write an SEO-optimized title (≤80 chars, keyword-first, no ALL CAPS)
-3. Write a structured HTML description (bullets: what it is, condition, what's included)
+3. Write a structured HTML description (bullets: what it is, condition, what's included). After your custom content, append this exact boilerplate HTML at the end of the description:
+
+<hr>
+<p><strong>COMPATIBILITY / FITMENT</strong><br>
+Buyer is responsible for confirming compatibility/fitment for their intended use. The pictures should do most of the describing and W.Y.S.I.W.Y.G (what you see is what you get).</p>
+
+<p><strong>SHIPPING</strong><br>
+Items ship quickly and are packed securely. For safe transit, detachable parts may be removed/disassembled and packaged separately.</p>
+
+<p><strong>RETURNS &amp; ISSUES</strong><br>
+Returns are handled according to the return policy shown in this listing and eBay's Money Back Guarantee. If there's a problem, please message us through eBay first, and we'll work with you to resolve it quickly.</p>
+
+<p><strong>PAYMENT</strong><br>
+Payment is processed through eBay checkout using the payment methods available there.</p>
+
+<p><strong>FRAUD PREVENTION</strong><br>
+We record serial numbers/unique identifiers where applicable.</p>
+
+<p><strong>SHIPPING COST</strong><br>
+Shipping is calculated by eBay based on package size/weight, destination, and carrier rates.</p>
 4. Write result.json to /mnt/session/outputs/ with these exact fields:
    - item_identified: what you think the item is
    - title: the listing title (≤80 chars)

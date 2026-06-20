@@ -168,17 +168,17 @@
 
         status.innerHTML = '<span class="spinner"></span> Identifying item and researching eBay comps…';
 
-        // Poll for result
+        // Poll for result — up to 10 minutes
         let result = null;
-        for (let i = 0; i < 40; i++) {
-          await new Promise(r => setTimeout(r, 5000));
+        for (let i = 0; i < 75; i++) {
+          await new Promise(r => setTimeout(r, 8000));
           const pollRes = await fetch('/api/status?session_id=' + session_id);
           const data = await pollRes.json();
           if (data.status === 'done') { result = data.result; break; }
           if (data.status === 'error') throw new Error(data.message || 'Agent error');
         }
 
-        if (!result) throw new Error('Timed out — check eBay Seller Hub for your draft.');
+        if (!result) throw new Error('Still running — check eBay Seller Hub → Drafts in a few minutes. The agent may still be working.');
 
         status.className = 'status done';
         status.innerHTML = `

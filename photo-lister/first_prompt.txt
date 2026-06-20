@@ -1,0 +1,5 @@
+A seller has uploaded a photo of an item they want to list on eBay.
+
+Image URL: {{IMAGE_URL}}
+
+Identify the item, research eBay sold comps, write an SEO-optimized listing (title ≤80 chars, structured HTML description), and create a draft listing in eBay using AddItem with a ScheduleTime 30 days from today. Write result.json to /mnt/session/outputs/.

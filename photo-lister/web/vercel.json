@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/upload", "destination": "/api/upload.js" },
+    { "source": "/api/status", "destination": "/api/status.js" }
+  ]
+}

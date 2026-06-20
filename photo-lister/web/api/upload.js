@@ -1,4 +1,4 @@
-// Vercel serverless function — uploads image to 0x0.st (free public host),
+// Vercel serverless function — uploads image to litterbox.catbox.moe (free temp host),
 // creates a CMA session with the public URL for the agent to download.
 
 export const config = { api: { bodyParser: false } };
@@ -41,12 +41,14 @@ export default async function handler(req, res) {
     // 1. Parse the uploaded image
     const { imageData, mimeType } = await readMultipart(req);
 
-    // 2. Upload to 0x0.st — free public file host, no auth, simple multipart POST
+    // 2. Upload to litterbox.catbox.moe — free temp host (1h), no auth needed
     const form = new FormData();
     const blob = new Blob([imageData], { type: mimeType });
-    form.append('file', blob, 'item.jpg');
+    form.append('reqtype', 'fileupload');
+    form.append('time', '1h');
+    form.append('fileToUpload', blob, 'item.jpg');
 
-    const uploadRes = await fetch('https://0x0.st', {
+    const uploadRes = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
       method: 'POST',
       body: form,
     });

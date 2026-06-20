@@ -79,7 +79,7 @@ export default async function handler(req, res) {
     const session = await sessionRes.json();
     const sessionId = session.id;
 
-    // 4. Kick off with the image URL
+    // 4. Kick off — agent identifies item and researches comps only; Vercel calls AddItem
     const task = `A seller has uploaded a photo of an item they want to list on eBay.
 
 Download the image and save it to /tmp/item_photo.jpg using your bash tool:
@@ -91,10 +91,20 @@ After identifying the item:
 1. Search eBay sold comps using the Finding API (findCompletedItems) to get low/avg/high sold prices
 2. Write an SEO-optimized title (≤80 chars, keyword-first, no ALL CAPS)
 3. Write a structured HTML description (bullets: what it is, condition, what's included)
-4. Create a draft in eBay using AddItem with ScheduleTime 30 days from today at 10 AM Eastern
-5. Write result.json to /mnt/session/outputs/ with: item_identified, title, price_recommended, comp_low, comp_avg, comp_high, ebay_item_id, schedule_time`;
+4. Write result.json to /mnt/session/outputs/ with these exact fields:
+   - item_identified: what you think the item is
+   - title: the listing title (≤80 chars)
+   - description: the full HTML description string
+   - price_recommended: number (no $ sign)
+   - comp_low: number
+   - comp_avg: number
+   - comp_high: number
+   - category_id: eBay category ID as a string
+   - condition_id: eBay condition code (1000=New, 3000=Used, etc.)
 
-    const rubric = `1. Image downloaded and item identified\n2. eBay sold comps found (low/avg/high)\n3. Title ≤80 chars, keyword-first, no ALL CAPS\n4. HTML description written\n5. AddItem succeeds — valid eBay Item ID in result.json\n6. ScheduleTime is 30+ days in the future`;
+DO NOT call eBay AddItem — the listing will be created separately.`;
+
+    const rubric = `1. Image downloaded and item identified\n2. eBay sold comps found (low/avg/high)\n3. Title ≤80 chars, keyword-first, no ALL CAPS\n4. HTML description written\n5. result.json written with all required fields including category_id and condition_id`;
 
     const kickRes = await fetch(`${BASE}/sessions/${sessionId}/events`, {
       method: 'POST',

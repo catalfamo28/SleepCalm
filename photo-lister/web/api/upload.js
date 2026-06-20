@@ -1,6 +1,5 @@
 // Vercel serverless function — receives image, uploads to Anthropic Files API,
 // creates a CMA session, returns session_id for polling.
-import { put } from '@vercel/blob';
 
 export const config = { api: { bodyParser: false } };
 
@@ -12,7 +11,6 @@ async function readMultipart(req) {
   const boundary = contentType.split('boundary=')[1];
   if (!boundary) throw new Error('No boundary in multipart');
 
-  // Parse multipart body — find the image part
   const parts = body.toString('binary').split('--' + boundary);
   for (const part of parts) {
     if (!part.includes('Content-Disposition')) continue;
@@ -43,12 +41,23 @@ export default async function handler(req, res) {
     // 1. Parse the uploaded image
     const { imageData, mimeType } = await readMultipart(req);
 
-    // 2. Upload image to Vercel Blob for a public URL the agent can download
-    const blob = await put(`item-photos/${Date.now()}.jpg`, imageData, {
-      access: 'public',
-      contentType: mimeType,
+    // 2. Upload image to Anthropic Files API to get a file_id
+    const formData = new FormData();
+    const blob = new Blob([imageData], { type: mimeType });
+    formData.append('file', blob, 'item.jpg');
+
+    const fileRes = await fetch('https://api.anthropic.com/v1/files', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'files-api-2025-04-14',
+      },
+      body: formData,
     });
-    const imageUrl = blob.url;
+    if (!fileRes.ok) throw new Error('Failed to upload image: ' + await fileRes.text());
+    const fileData = await fileRes.json();
+    const fileId = fileData.id;
 
     // 3. Create a CMA session
     const BASE = 'https://api.anthropic.com/v1';
@@ -73,8 +82,26 @@ export default async function handler(req, res) {
     const session = await sessionRes.json();
     const sessionId = session.id;
 
-    // 4. Kick off with the outcome event
-    const task = `A seller has uploaded a photo of an item they want to list on eBay.\n\nImage URL: ${imageUrl}\n\nIdentify the item, research eBay sold comps, write an SEO-optimized listing (title ≤80 chars, structured HTML description), and create a draft listing in eBay using AddItem with a ScheduleTime 30 days from today. Write result.json to /mnt/session/outputs/.`;
+    // 4. Kick off — pass the Anthropic file_id; agent downloads it via Files API
+    const task = `A seller has uploaded a photo of an item they want to list on eBay.
+
+The image has been uploaded to the Anthropic Files API with file_id: ${fileId}
+
+To retrieve the image, use the bash tool to run:
+curl -s "https://api.anthropic.com/v1/files/${fileId}/content" \\
+  -H "x-api-key: $ANTHROPIC_API_KEY_FOR_FILES" \\
+  -H "anthropic-version: 2023-06-01" \\
+  -H "anthropic-beta: files-api-2025-04-14" \\
+  --output /tmp/item_photo.jpg
+
+Then analyze the saved image at /tmp/item_photo.jpg using your vision capability to identify the item.
+
+After identifying the item:
+1. Search eBay sold comps using the Finding API
+2. Write an SEO-optimized title (≤80 chars) and HTML description
+3. Create a draft listing in eBay using AddItem with ScheduleTime 30 days from today
+4. Write result.json to /mnt/session/outputs/`;
+
     const rubric = `1. Item correctly identified from the photo\n2. eBay sold comps found (low/avg/high)\n3. Title ≤80 chars, keyword-first, no ALL CAPS\n4. HTML description with condition and details\n5. AddItem succeeds — valid eBay Item ID in result.json\n6. ScheduleTime is 30+ days in the future`;
 
     const kickRes = await fetch(`${BASE}/sessions/${sessionId}/events`, {

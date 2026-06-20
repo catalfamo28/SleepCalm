@@ -1,5 +1,5 @@
-// Vercel serverless function — receives image, hosts it publicly via transfer.sh,
-// creates a CMA session with the public URL for the agent to download.
+// Vercel serverless function — receives image as base64, passes it directly
+// to the CMA agent in the task prompt (no external file host needed).
 
 export const config = { api: { bodyParser: false } };
 
@@ -38,23 +38,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Parse the uploaded image
-    const { imageData, mimeType } = await readMultipart(req);
+    // 1. Parse the uploaded image and encode as base64
+    const { imageData } = await readMultipart(req);
+    const b64 = imageData.toString('base64');
 
-    // 2. Upload to transfer.sh — free public file host, no auth needed
-    const filename = `item-${Date.now()}.jpg`;
-    const uploadRes = await fetch(`https://transfer.sh/${filename}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': mimeType,
-        'Max-Days': '1',
-      },
-      body: imageData,
-    });
-    if (!uploadRes.ok) throw new Error('Image host upload failed: ' + await uploadRes.text());
-    const imageUrl = (await uploadRes.text()).trim();
-
-    // 3. Create a CMA session
+    // 2. Create a CMA session
     const BASE = 'https://api.anthropic.com/v1';
     const headers = {
       'x-api-key': apiKey,
@@ -77,14 +65,13 @@ export default async function handler(req, res) {
     const session = await sessionRes.json();
     const sessionId = session.id;
 
-    // 4. Kick off with the image URL
+    // 3. Kick off — embed image as base64 so agent decodes it locally
     const task = `A seller has uploaded a photo of an item they want to list on eBay.
+The image is embedded below as base64. Use your bash tool to decode it:
 
-Download the image from this URL and save it to /tmp/item_photo.jpg:
-${imageUrl}
-
-Use your bash tool to run:
-curl -sL "${imageUrl}" -o /tmp/item_photo.jpg
+\`\`\`bash
+echo "${b64}" | base64 -d > /tmp/item_photo.jpg
+\`\`\`
 
 Then analyze /tmp/item_photo.jpg using your vision capability to identify the item (brand, model, type, condition).
 
@@ -95,7 +82,7 @@ After identifying the item:
 4. Create a draft in eBay using AddItem with ScheduleTime 30 days from today at 10 AM Eastern
 5. Write result.json to /mnt/session/outputs/ with: item_identified, title, price_recommended, comp_low, comp_avg, comp_high, ebay_item_id, schedule_time`;
 
-    const rubric = `1. Image downloaded and item identified\n2. eBay sold comps found (low/avg/high)\n3. Title ≤80 chars, keyword-first, no ALL CAPS\n4. HTML description written\n5. AddItem succeeds — valid eBay Item ID in result.json\n6. ScheduleTime is 30+ days in the future`;
+    const rubric = `1. Image decoded and item identified\n2. eBay sold comps found (low/avg/high)\n3. Title ≤80 chars, keyword-first, no ALL CAPS\n4. HTML description written\n5. AddItem succeeds — valid eBay Item ID in result.json\n6. ScheduleTime is 30+ days in the future`;
 
     const kickRes = await fetch(`${BASE}/sessions/${sessionId}/events`, {
       method: 'POST',

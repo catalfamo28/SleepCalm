@@ -27,12 +27,19 @@ function buildAddItemXml(result, appId, userToken) {
     <Site>US</Site>
     <ScheduleTime>${scheduleTime}</ScheduleTime>
     <ShippingDetails>
-      <ShippingType>Flat</ShippingType>
+      <ShippingType>Calculated</ShippingType>
       <ShippingServiceOptions>
         <ShippingServicePriority>1</ShippingServicePriority>
-        <ShippingService>USPSMedia</ShippingService>
-        <ShippingServiceCost>4.99</ShippingServiceCost>
+        <ShippingService>${result.shipping_service || 'USPSFirstClass'}</ShippingService>
       </ShippingServiceOptions>
+      <PackageDetails>
+        <WeightMajor unit="lbs">${Math.floor((result.weight_oz || 8) / 16)}</WeightMajor>
+        <WeightMinor unit="oz">${Math.round((result.weight_oz || 8) % 16)}</WeightMinor>
+        <PackageDepth unit="in">${result.package_depth || 4}</PackageDepth>
+        <PackageLength unit="in">${result.package_length || 8}</PackageLength>
+        <PackageWidth unit="in">${result.package_width || 6}</PackageWidth>
+        <PackageType>PackageThickEnvelope</PackageType>
+      </PackageDetails>
     </ShippingDetails>
     <ReturnPolicy>
       <ReturnsAcceptedOption>ReturnsAccepted</ReturnsAcceptedOption>

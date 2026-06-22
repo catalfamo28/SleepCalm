@@ -213,7 +213,7 @@
           <div class="result-row"><span class="result-label">Title</span><span class="result-val">${result.title || '—'}</span></div>
           <div class="result-row"><span class="result-label">Price</span><span class="result-val">$${result.price_recommended || '—'}</span></div>
           <div class="result-row"><span class="result-label">Comps</span><span class="result-val">$${result.comp_low} – $${result.comp_avg} – $${result.comp_high}</span></div>
-          <div class="result-row"><span class="result-label">Shipping</span><span class="result-val">${result.weight_oz || '?'}oz · ${result.weight_oz < 16 ? 'First Class' : 'Ground Advantage'}</span></div>
+          <div class="result-row"><span class="result-label">Shipping</span><span class="result-val">${result.weight_oz || '?'}oz · ${result.weight_oz < 16 ? 'First Class' : 'Priority'}</span></div>
           <div class="result-row"><span class="result-label">eBay ID</span><span class="result-val">${result.ebay_item_id || (result.ebay_error ? '❌ ' + result.ebay_error : '—')}</span></div>
         `;
       } catch (err) {

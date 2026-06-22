@@ -3,8 +3,7 @@
 
 function shippingCost(oz) {
   if (oz < 16) return { service: 'USPSFirstClass', cost: '5.99' };
-  if (oz < 80) return { service: 'USPSGroundAdvantage', cost: '12.99' };
-  return { service: 'USPSGroundAdvantage', cost: '19.99' };
+  return { service: 'USPSPriority', cost: '14.99' };
 }
 
 function buildAddItemXml(result, appId, userToken, sellerZip) {

@@ -1,7 +1,7 @@
 // Vercel serverless function — polls CMA session, then calls eBay AddItem directly
 // when the agent has finished identifying the item and writing listing details.
 
-function buildAddItemXml(result, appId, userToken) {
+function buildAddItemXml(result, appId, userToken, sellerZip) {
   const scheduleDate = new Date();
   scheduleDate.setDate(scheduleDate.getDate() + 20);
   scheduleDate.setHours(14, 0, 0, 0); // 10 AM Eastern = 14:00 UTC
@@ -28,6 +28,7 @@ function buildAddItemXml(result, appId, userToken) {
     <ScheduleTime>${scheduleTime}</ScheduleTime>
     <ShippingDetails>
       <ShippingType>Calculated</ShippingType>
+      <OriginatingPostalCode>${sellerZip || '95126'}</OriginatingPostalCode>
       <ShippingServiceOptions>
         <ShippingServicePriority>1</ShippingServicePriority>
         <ShippingService>${result.shipping_service || 'USPSGroundAdvantage'}</ShippingService>
@@ -51,8 +52,8 @@ function buildAddItemXml(result, appId, userToken) {
 </AddItemRequest>`;
 }
 
-async function callAddItem(result, appId, certId, userToken) {
-  const xml = buildAddItemXml(result, appId, userToken);
+async function callAddItem(result, appId, certId, userToken, sellerZip) {
+  const xml = buildAddItemXml(result, appId, userToken, sellerZip);
   const res = await fetch('https://api.ebay.com/ws/api.dll', {
     method: 'POST',
     headers: {
@@ -92,6 +93,7 @@ export default async function handler(req, res) {
   const ebayAppId = process.env.EBAY_APP_ID;
   const ebayCertId = process.env.EBAY_CERT_ID;
   const ebayUserToken = process.env.EBAY_USER_TOKEN;
+  const sellerZip = process.env.SELLER_ZIP || '95126';
 
   const BASE = 'https://api.anthropic.com/v1';
   const headers = {
@@ -120,7 +122,7 @@ export default async function handler(req, res) {
       // Call eBay AddItem from Vercel (reliable network)
       if (ebayAppId && ebayCertId && ebayUserToken) {
         try {
-          const itemId = await callAddItem(result, ebayAppId, ebayCertId, ebayUserToken);
+          const itemId = await callAddItem(result, ebayAppId, ebayCertId, ebayUserToken, sellerZip);
           result.ebay_item_id = itemId;
         } catch (ebayErr) {
           result.ebay_error = ebayErr.message;

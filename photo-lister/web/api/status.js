@@ -3,7 +3,7 @@
 
 function buildAddItemXml(result, appId, userToken) {
   const scheduleDate = new Date();
-  scheduleDate.setDate(scheduleDate.getDate() + 30);
+  scheduleDate.setDate(scheduleDate.getDate() + 20);
   scheduleDate.setHours(14, 0, 0, 0); // 10 AM Eastern = 14:00 UTC
   const scheduleTime = scheduleDate.toISOString().replace(/\.\d{3}Z$/, 'Z');
 

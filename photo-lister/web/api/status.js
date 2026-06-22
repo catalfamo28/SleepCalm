@@ -28,20 +28,21 @@ function buildAddItemXml(result, appId, userToken, sellerZip) {
     <ScheduleTime>${scheduleTime}</ScheduleTime>
     <ShippingDetails>
       <ShippingType>Calculated</ShippingType>
-      <OriginatingPostalCode>${sellerZip || '95126'}</OriginatingPostalCode>
       <ShippingServiceOptions>
         <ShippingServicePriority>1</ShippingServicePriority>
         <ShippingService>${result.shipping_service || 'USPSGroundAdvantage'}</ShippingService>
       </ShippingServiceOptions>
-      <PackageDetails>
-        <WeightMajor unit="lbs">${Math.floor((result.weight_oz || 8) / 16)}</WeightMajor>
-        <WeightMinor unit="oz">${Math.round((result.weight_oz || 8) % 16)}</WeightMinor>
-        <PackageDepth unit="in">${result.package_depth || 4}</PackageDepth>
-        <PackageLength unit="in">${result.package_length || 8}</PackageLength>
-        <PackageWidth unit="in">${result.package_width || 6}</PackageWidth>
-        <PackageType>${(result.weight_oz || 8) < 16 ? 'PackageThickEnvelope' : 'Package'}</PackageType>
-      </PackageDetails>
     </ShippingDetails>
+    <ShippingPackageDetails>
+      <MeasurementUnit>English</MeasurementUnit>
+      <PackageDepth unit="in">${result.package_depth || 4}</PackageDepth>
+      <PackageLength unit="in">${result.package_length || 8}</PackageLength>
+      <PackageWidth unit="in">${result.package_width || 6}</PackageWidth>
+      <PackagingType>${(result.weight_oz || 8) < 16 ? 'PackageThickEnvelope' : 'Package'}</PackagingType>
+      <ShipFromPostalCode>${sellerZip || '95126'}</ShipFromPostalCode>
+      <WeightMajor unit="lbs">${Math.floor((result.weight_oz || 8) / 16)}</WeightMajor>
+      <WeightMinor unit="oz">${Math.round((result.weight_oz || 8) % 16)}</WeightMinor>
+    </ShippingPackageDetails>
     <ReturnPolicy>
       <ReturnsAcceptedOption>ReturnsAccepted</ReturnsAcceptedOption>
       <RefundOption>MoneyBack</RefundOption>

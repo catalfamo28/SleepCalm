@@ -29,11 +29,11 @@
     .upload-area {
       border: 2px dashed #d1d1d6;
       border-radius: 14px;
-      padding: 40px 20px;
+      padding: 32px 20px;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       position: relative;
     }
     .upload-area:hover { border-color: #0071e3; background: #f0f7ff; }
@@ -41,17 +41,22 @@
     .upload-area input[type=file] {
       position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
     }
-    .upload-icon { font-size: 48px; margin-bottom: 12px; }
+    .upload-icon { font-size: 40px; margin-bottom: 8px; }
     .upload-label { font-size: 16px; font-weight: 600; color: #1d1d1f; margin-bottom: 4px; }
     .upload-hint { font-size: 13px; color: #6e6e73; }
 
-    #preview {
-      display: none;
-      width: 100%;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      max-height: 280px;
-      object-fit: contain;
+    .thumb-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .thumb-strip img {
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #d1d1d6;
     }
 
     button {
@@ -65,76 +70,88 @@
       font-weight: 600;
       cursor: pointer;
       transition: background 0.2s;
+      margin-bottom: 10px;
     }
     button:hover { background: #0077ed; }
     button:disabled { background: #aeaeb2; cursor: not-allowed; }
+    #cameraBtn { background: #34c759; }
+    #cameraBtn:hover { background: #30b350; }
 
-    .status {
-      display: none;
-      margin-top: 24px;
-      padding: 16px;
+    .job-list { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .job {
+      padding: 14px;
       border-radius: 12px;
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.6;
     }
-    .status.working { background: #fff9e6; border: 1px solid #f0c000; color: #7a5c00; }
-    .status.done { background: #f0fff4; border: 1px solid #34c759; color: #1a5c2e; }
-    .status.error { background: #fff0f0; border: 1px solid #ff3b30; color: #7a0000; }
+    .job.working { background: #fff9e6; border: 1px solid #f0c000; color: #7a5c00; }
+    .job.done    { background: #f0fff4; border: 1px solid #34c759; color: #1a5c2e; }
+    .job.error   { background: #fff0f0; border: 1px solid #ff3b30; color: #7a0000; }
 
-    .result-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e5e5ea; }
+    .result-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e5e5ea; }
     .result-row:last-child { border-bottom: none; }
-    .result-label { font-weight: 600; color: #6e6e73; font-size: 13px; }
-    .result-val { font-size: 13px; color: #1d1d1f; text-align: right; max-width: 60%; }
+    .result-label { font-weight: 600; color: #6e6e73; font-size: 12px; }
+    .result-val { font-size: 12px; color: #1d1d1f; text-align: right; max-width: 60%; }
 
-    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #f0c000; border-top-color: #7a5c00; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #f0c000; border-top-color: #7a5c00; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 6px; vertical-align: middle; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>📷 eBay Draft Lister</h1>
-    <p class="sub">Take a photo, tap Create Draft — done.</p>
-
-    <img id="preview" alt="Item preview">
+    <p class="sub">Select multiple photos — each becomes a scheduled eBay listing.</p>
 
     <div class="upload-area" id="uploadArea">
-      <input type="file" accept="image/*" id="fileInput">
+      <input type="file" accept="image/*" multiple id="fileInput">
       <div class="upload-icon">🖼️</div>
-      <div class="upload-label">Tap to choose from photo album</div>
-      <div class="upload-hint">JPG, PNG, HEIC · up to 10 MB</div>
+      <div class="upload-label">Tap to choose photos</div>
+      <div class="upload-hint">Select multiple · JPG, PNG, HEIC</div>
     </div>
 
-    <button id="cameraBtn" style="background:#34c759;margin-bottom:12px;">📷 Take a New Photo</button>
+    <div class="thumb-strip" id="thumbStrip"></div>
 
+    <button id="cameraBtn">📷 Take a New Photo</button>
     <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display:none">
-    <button id="submitBtn" disabled>Create eBay Draft</button>
 
-    <div class="status" id="status"></div>
+    <button id="submitBtn" disabled>Create eBay Drafts</button>
+
+    <div class="job-list" id="jobList"></div>
   </div>
 
   <script>
-    const fileInput = document.getElementById('fileInput');
+    const fileInput   = document.getElementById('fileInput');
     const cameraInput = document.getElementById('cameraInput');
-    const cameraBtn = document.getElementById('cameraBtn');
-    const preview = document.getElementById('preview');
-    const uploadArea = document.getElementById('uploadArea');
-    const submitBtn = document.getElementById('submitBtn');
-    const status = document.getElementById('status');
-    let selectedFile = null;
+    const cameraBtn   = document.getElementById('cameraBtn');
+    const uploadArea  = document.getElementById('uploadArea');
+    const thumbStrip  = document.getElementById('thumbStrip');
+    const submitBtn   = document.getElementById('submitBtn');
+    const jobList     = document.getElementById('jobList');
+    let selectedFiles = [];
 
-    function handleFile(file) {
-      if (!file) return;
-      selectedFile = file;
-      const url = URL.createObjectURL(file);
-      preview.src = url;
-      preview.style.display = 'block';
-      uploadArea.classList.add('has-image');
-      uploadArea.querySelector('.upload-label').textContent = file.name;
-      submitBtn.disabled = false;
+    function addFiles(newFiles) {
+      for (const f of newFiles) selectedFiles.push(f);
+      renderThumbs();
+      submitBtn.disabled = selectedFiles.length === 0;
+      submitBtn.textContent = selectedFiles.length > 1
+        ? `Create ${selectedFiles.length} eBay Drafts`
+        : 'Create eBay Draft';
     }
 
-    fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
-    cameraInput.addEventListener('change', () => handleFile(cameraInput.files[0]));
+    function renderThumbs() {
+      thumbStrip.innerHTML = '';
+      uploadArea.classList.toggle('has-image', selectedFiles.length > 0);
+      uploadArea.querySelector('.upload-label').textContent =
+        selectedFiles.length ? `${selectedFiles.length} photo${selectedFiles.length > 1 ? 's' : ''} selected` : 'Tap to choose photos';
+      for (const f of selectedFiles) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        thumbStrip.appendChild(img);
+      }
+    }
+
+    fileInput.addEventListener('change', () => addFiles(Array.from(fileInput.files)));
+    cameraInput.addEventListener('change', () => addFiles(Array.from(cameraInput.files)));
     cameraBtn.addEventListener('click', () => cameraInput.click());
 
     function resizeImage(file, maxPx = 1200) {
@@ -157,16 +174,18 @@
       });
     }
 
-    submitBtn.addEventListener('click', async () => {
-      if (!selectedFile) return;
+    function createJobCard(name) {
+      const div = document.createElement('div');
+      div.className = 'job working';
+      div.innerHTML = `<span class="spinner"></span> <strong>${name}</strong> — uploading…`;
+      jobList.appendChild(div);
+      return div;
+    }
 
-      submitBtn.disabled = true;
-      status.className = 'status working';
-      status.style.display = 'block';
-      status.innerHTML = '<span class="spinner"></span> Uploading photo and starting agent… this takes about 2–3 minutes.';
-
+    async function processOne(file, card) {
       try {
-        const resized = await resizeImage(selectedFile);
+        card.innerHTML = `<span class="spinner"></span> <strong>${file.name}</strong> — resizing & uploading…`;
+        const resized = await resizeImage(file);
         const formData = new FormData();
         formData.append('image', resized, 'item.jpg');
 
@@ -174,9 +193,8 @@
         if (!uploadRes.ok) throw new Error('Upload failed: ' + await uploadRes.text());
         const { session_id } = await uploadRes.json();
 
-        status.innerHTML = '<span class="spinner"></span> Identifying item and researching eBay comps…';
+        card.innerHTML = `<span class="spinner"></span> <strong>${file.name}</strong> — agent identifying item…`;
 
-        // Poll for result — up to 10 minutes
         let result = null;
         for (let i = 0; i < 75; i++) {
           await new Promise(r => setTimeout(r, 8000));
@@ -186,24 +204,42 @@
           if (data.status === 'error') throw new Error(data.message || 'Agent error');
         }
 
-        if (!result) throw new Error('Still running — check eBay Seller Hub → Drafts in a few minutes. The agent may still be working.');
+        if (!result) throw new Error('Still running — check eBay Seller Hub → Scheduled.');
 
-        status.className = 'status done';
-        status.innerHTML = `
-          <strong>✅ Draft created in eBay!</strong><br><br>
-          <div class="result-row"><span class="result-label">Item</span><span class="result-val">${result.item_identified}</span></div>
-          <div class="result-row"><span class="result-label">Title</span><span class="result-val">${result.title}</span></div>
-          <div class="result-row"><span class="result-label">Price</span><span class="result-val">$${result.price_recommended}</span></div>
+        card.className = 'job done';
+        card.innerHTML = `
+          <strong>✅ ${file.name}</strong><br><br>
+          <div class="result-row"><span class="result-label">Item</span><span class="result-val">${result.item_identified || '—'}</span></div>
+          <div class="result-row"><span class="result-label">Title</span><span class="result-val">${result.title || '—'}</span></div>
+          <div class="result-row"><span class="result-label">Price</span><span class="result-val">$${result.price_recommended || '—'}</span></div>
           <div class="result-row"><span class="result-label">Comps</span><span class="result-val">$${result.comp_low} – $${result.comp_avg} – $${result.comp_high}</span></div>
-          <div class="result-row"><span class="result-label">eBay Item ID</span><span class="result-val">${result.ebay_item_id}</span></div>
-          <br>Add your photos in <strong>Seller Hub → Scheduled</strong>, then publish when ready.
+          <div class="result-row"><span class="result-label">Shipping</span><span class="result-val">${result.shipping_service || '—'} · ${result.weight_oz || '?'}oz</span></div>
+          <div class="result-row"><span class="result-label">eBay ID</span><span class="result-val">${result.ebay_item_id || '—'}</span></div>
         `;
-        submitBtn.disabled = false;
       } catch (err) {
-        status.className = 'status error';
-        status.innerHTML = '❌ ' + err.message;
-        submitBtn.disabled = false;
+        card.className = 'job error';
+        card.innerHTML = `❌ <strong>${file.name}</strong> — ${err.message}`;
       }
+    }
+
+    submitBtn.addEventListener('click', async () => {
+      if (selectedFiles.length === 0) return;
+      submitBtn.disabled = true;
+      jobList.innerHTML = '';
+
+      // Kick off all jobs in parallel
+      const jobs = selectedFiles.map(file => {
+        const card = createJobCard(file.name);
+        return processOne(file, card);
+      });
+
+      await Promise.allSettled(jobs);
+      submitBtn.disabled = false;
+
+      // Reset for next batch
+      selectedFiles = [];
+      renderThumbs();
+      submitBtn.textContent = 'Create eBay Draft';
     });
   </script>
 </body>

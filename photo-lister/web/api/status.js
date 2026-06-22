@@ -32,6 +32,7 @@ function buildAddItemXml(result, userToken) {
     <StartPrice>${price.toFixed(2)}</StartPrice>
     <ConditionID>${result.condition_id || '3000'}</ConditionID>
     <Country>US</Country>
+    <Location>San Jose, CA</Location>
     <Currency>USD</Currency>
     <DispatchTimeMax>3</DispatchTimeMax>
     <ListingDuration>GTC</ListingDuration>

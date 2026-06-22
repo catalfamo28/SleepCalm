@@ -47,7 +47,8 @@ ${BOILERPLATE}
    - comp_high: number
    - category_id: eBay category ID as a string
    - condition_id: eBay condition code (1000=New, 3000=Used)
-   - weight_oz: estimated package weight in ounces as a number
+     - weight_oz: estimated package weight in ounces as a number
+   - photo_url: the exact image URL you downloaded (i.e. "${imageUrl}")
 
 DO NOT call eBay AddItem — the listing will be created separately.`;
 
@@ -55,7 +56,7 @@ const RUBRIC = `1. Image downloaded and item identified
 2. eBay sold comps found (low/avg/high)
 3. Title ≤80 chars, keyword-first, no ALL CAPS
 4. HTML description written with boilerplate appended
-5. result.json written with all required fields`;
+5. result.json written with all required fields including photo_url`;
 
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {

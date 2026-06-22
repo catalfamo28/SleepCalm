@@ -38,7 +38,7 @@ function buildAddItemXml(result, appId, userToken) {
         <PackageDepth unit="in">${result.package_depth || 4}</PackageDepth>
         <PackageLength unit="in">${result.package_length || 8}</PackageLength>
         <PackageWidth unit="in">${result.package_width || 6}</PackageWidth>
-        <PackageType>PackageThickEnvelope</PackageType>
+        <PackageType>${(result.weight_oz || 8) < 16 ? 'PackageThickEnvelope' : 'Package'}</PackageType>
       </PackageDetails>
     </ShippingDetails>
     <ReturnPolicy>

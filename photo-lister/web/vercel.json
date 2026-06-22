@@ -2,5 +2,9 @@
   "rewrites": [
     { "source": "/api/upload", "destination": "/api/upload.js" },
     { "source": "/api/status", "destination": "/api/status.js" }
-  ]
+  ],
+  "functions": {
+    "api/upload.js": { "maxDuration": 60 },
+    "api/status.js": { "maxDuration": 60 }
+  }
 }

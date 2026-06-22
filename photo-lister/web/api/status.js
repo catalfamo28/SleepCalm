@@ -30,7 +30,7 @@ function buildAddItemXml(result, appId, userToken) {
       <ShippingType>Calculated</ShippingType>
       <ShippingServiceOptions>
         <ShippingServicePriority>1</ShippingServicePriority>
-        <ShippingService>${result.shipping_service || 'USPSFirstClass'}</ShippingService>
+        <ShippingService>${result.shipping_service || 'USPSGroundAdvantage'}</ShippingService>
       </ShippingServiceOptions>
       <PackageDetails>
         <WeightMajor unit="lbs">${Math.floor((result.weight_oz || 8) / 16)}</WeightMajor>

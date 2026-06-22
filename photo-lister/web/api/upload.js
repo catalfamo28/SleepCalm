@@ -116,8 +116,7 @@ Shipping is calculated by eBay based on package size/weight, destination, and ca
    Base estimates on the item type — e.g. a power drill kit ships ~5-8 lbs, a small vintage cup box ships ~1-2 lbs.
    Choose shipping_service based on weight:
    - Under 16 oz → "USPSFirstClass"
-   - 16 oz to 10 lbs → "USPSPriority"
-   - Over 10 lbs → "USPSPriorityMailLargeBox"
+   - 16 oz and over → "USPSGroundAdvantage"
 
 5. Write result.json to /mnt/session/outputs/ with these exact fields:
    - item_identified: what you think the item is
@@ -133,7 +132,7 @@ Shipping is calculated by eBay based on package size/weight, destination, and ca
    - package_length: estimated length in inches (number)
    - package_width: estimated width in inches (number)
    - package_depth: estimated depth in inches (number)
-   - shipping_service: "USPSFirstClass", "USPSPriority", or "USPSPriorityMailLargeBox"
+   - shipping_service: "USPSFirstClass" (under 16 oz) or "USPSGroundAdvantage" (16 oz and over)
 
 DO NOT call eBay AddItem — the listing will be created separately.`;
 

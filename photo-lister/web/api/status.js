@@ -1,11 +1,18 @@
 // Vercel serverless function — polls CMA session, then calls eBay AddItem directly
 // when the agent has finished identifying the item and writing listing details.
 
+function shippingCost(oz) {
+  if (oz < 16) return { service: 'USPSFirstClass', cost: '5.99' };
+  if (oz < 80) return { service: 'USPSGroundAdvantage', cost: '12.99' };
+  return { service: 'USPSGroundAdvantage', cost: '19.99' };
+}
+
 function buildAddItemXml(result, appId, userToken, sellerZip) {
   const scheduleDate = new Date();
   scheduleDate.setDate(scheduleDate.getDate() + 20);
   scheduleDate.setHours(14, 0, 0, 0); // 10 AM Eastern = 14:00 UTC
   const scheduleTime = scheduleDate.toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const ship = shippingCost(result.weight_oz || 8);
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <AddItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">
@@ -27,22 +34,13 @@ function buildAddItemXml(result, appId, userToken, sellerZip) {
     <Site>US</Site>
     <ScheduleTime>${scheduleTime}</ScheduleTime>
     <ShippingDetails>
-      <ShippingType>Calculated</ShippingType>
+      <ShippingType>Flat</ShippingType>
       <ShippingServiceOptions>
         <ShippingServicePriority>1</ShippingServicePriority>
-        <ShippingService>${result.shipping_service || 'USPSGroundAdvantage'}</ShippingService>
+        <ShippingService>${ship.service}</ShippingService>
+        <ShippingServiceCost currencyID="USD">${ship.cost}</ShippingServiceCost>
       </ShippingServiceOptions>
     </ShippingDetails>
-    <ShippingPackageDetails>
-      <MeasurementUnit>English</MeasurementUnit>
-      <PackageDepth unit="in">${result.package_depth || 4}</PackageDepth>
-      <PackageLength unit="in">${result.package_length || 8}</PackageLength>
-      <PackageWidth unit="in">${result.package_width || 6}</PackageWidth>
-      <PackagingType>${(result.weight_oz || 8) < 16 ? 'PackageThickEnvelope' : 'Package'}</PackagingType>
-      <ShipFromPostalCode>${sellerZip || '95126'}</ShipFromPostalCode>
-      <WeightMajor unit="lbs">${Math.floor((result.weight_oz || 8) / 16)}</WeightMajor>
-      <WeightMinor unit="oz">${Math.round((result.weight_oz || 8) % 16)}</WeightMinor>
-    </ShippingPackageDetails>
     <ReturnPolicy>
       <ReturnsAcceptedOption>ReturnsAccepted</ReturnsAcceptedOption>
       <RefundOption>MoneyBack</RefundOption>

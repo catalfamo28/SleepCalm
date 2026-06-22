@@ -110,13 +110,7 @@ We record serial numbers/unique identifiers where applicable.</p>
 
 <p><strong>SHIPPING COST</strong><br>
 Shipping is calculated by eBay based on package size/weight, destination, and carrier rates.</p>
-4. Estimate the shipping weight and package dimensions for this item. Use your knowledge of the item, its typical retail packaging, and any eBay sold listings you found to estimate:
-   - weight_oz: total package weight in ounces (item + typical packaging)
-   - package_length, package_width, package_depth: estimated box dimensions in inches (round up to nearest inch)
-   Base estimates on the item type — e.g. a power drill kit ships ~5-8 lbs, a small vintage cup box ships ~1-2 lbs.
-   Choose shipping_service based on weight:
-   - Under 16 oz → "USPSFirstClass"
-   - 16 oz and over → "USPSGroundAdvantage"
+4. Estimate the total shipping weight in ounces (item + typical packaging). Base estimates on the item type — e.g. a power drill kit ships ~5-8 lbs, a small vintage cup ships ~1-2 lbs.
 
 5. Write result.json to /mnt/session/outputs/ with these exact fields:
    - item_identified: what you think the item is
@@ -129,10 +123,6 @@ Shipping is calculated by eBay based on package size/weight, destination, and ca
    - category_id: eBay category ID as a string
    - condition_id: eBay condition code (1000=New, 3000=Used, etc.)
    - weight_oz: estimated package weight in ounces (number)
-   - package_length: estimated length in inches (number)
-   - package_width: estimated width in inches (number)
-   - package_depth: estimated depth in inches (number)
-   - shipping_service: "USPSFirstClass" (under 16 oz) or "USPSGroundAdvantage" (16 oz and over)
 
 DO NOT call eBay AddItem — the listing will be created separately.`;
 

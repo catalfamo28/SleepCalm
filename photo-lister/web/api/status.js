@@ -15,7 +15,7 @@ function buildAddItemXml(result, userToken) {
 
   const price = parseFloat(result.price_recommended) || 25.00;
   const ship = shippingCost(result.weight_oz || 8);
-
+  const photoUrl = (result.photo_url || '').replace(/&/g, '&amp;');
   const title = String(result.title || 'Item for sale')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .substring(0, 80);
@@ -40,6 +40,9 @@ function buildAddItemXml(result, userToken) {
     <Quantity>1</Quantity>
     <Site>US</Site>
     <ScheduleTime>${scheduleTime}</ScheduleTime>
+        <PictureDetails>
+      <PictureURL>${photoUrl}</PictureURL>
+    </PictureDetails>
     <ShippingDetails>
       <ShippingType>Flat</ShippingType>
       <ShippingServiceOptions>

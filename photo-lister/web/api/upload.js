@@ -48,6 +48,8 @@ ${BOILERPLATE}
    - category_id: eBay category ID as a string
    - condition_id: eBay condition code (1000=New, 3000=Used)
      - weight_oz: estimated package weight in ounces as a number
+        - photo_url: the exact image URL you downloaded (i.e. "${imageUrl}")
+        - photo_url: the exact image URL you downloaded (i.e. "${imageUrl}")
    - photo_url: the exact image URL you downloaded (i.e. "${imageUrl}")
 
 DO NOT call eBay AddItem — the listing will be created separately.`;
